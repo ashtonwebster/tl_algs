@@ -21,7 +21,7 @@ class Base_Transfer(object):
         rand_seed: Random seed passed to classifier  (default = 2016).
         classifier_params: Parameters passed to classifier (default = {})
     """
-    
+
     def __init__(self, test_set_X, test_set_proj, train_pool_X, train_pool_y,
                  train_pool_proj, Base_Classifier, rand_seed=None,
                  classifier_params={}):
@@ -30,7 +30,7 @@ class Base_Transfer(object):
         more information about specific parameters. This function performs no
         operations beyond initializing class attributes.
         """
-        
+
         self.test_set_X = test_set_X
         self.test_set_proj = test_set_proj
         self.train_pool_X = train_pool_X
@@ -39,11 +39,11 @@ class Base_Transfer(object):
         self.Base_Classifier = Base_Classifier
         self.rand_seed = rand_seed
         self.classifier_params = classifier_params
-           
+
     def train_filter_test(self):
-        
-           raise NotImplementedError()
-    
+
+        raise NotImplementedError()
+
     def json_encode(self):
         """
         Encode transfer learning algorithm as JSON.
@@ -53,8 +53,8 @@ class Base_Transfer(object):
             classifier and random seed passed to __init__. This dictionary can
             be passed to json.dumps to obtain a JSON formatted string.
         """
-        
+
         return {
-            "Base_Classifier" : self.Base_Classifier,
-            "rand_seed" : self.rand_seed
+            "Base_Classifier": self.Base_Classifier,
+            "rand_seed": self.rand_seed
         }

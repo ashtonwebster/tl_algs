@@ -44,21 +44,21 @@ def _kmeans_cluster(test_set_X, train_pool_X, train_pool_y, cluster_factor,
     X_test_clusters = cluster_model.predict(test_set_X)
     for i, clust in enumerate(X_test_clusters):
         clusters[clust]['X_test'] = clusters[clust]['X_test']. \
-                                    append(test_set_X.iloc[i, ])
+            append(test_set_X.iloc[i, ])
 
     # Populate clusters based on training data.
     X_train_clusters = cluster_model.predict(train_pool_X)
     for i, clust in enumerate(X_train_clusters):
         clusters[clust]['X_train'] = clusters[clust]['X_train']. \
-                                     append(train_pool_X.iloc[i, ])
+            append(train_pool_X.iloc[i, ])
         clusters[clust]['y_train'] = clusters[clust]['y_train'] \
             .append(pd.Series([train_pool_y.iloc[i]]))
 
     # Remove clusters with no test instance.
     to_remove = [
-                 i for (i, d) in enumerate(clusters)
-                 if (d['X_test'].shape[0] == 0 or d['X_train'].shape[0] == 0)
-                ]
+        i for (i, d) in enumerate(clusters)
+        if (d['X_test'].shape[0] == 0 or d['X_train'].shape[0] == 0)
+    ]
 
     to_remove.reverse()
     for i in to_remove:
@@ -98,15 +98,15 @@ class Burak(tl_alg.Base_Transfer):
                  rand_seed=None, k=10, cluster_factor=100):
 
         super(Burak, self).__init__(
-                                    test_set_X,
-                                    test_set_proj,
-                                    train_pool_X,
-                                    train_pool_y,
-                                    train_pool_proj,
-                                    Base_Classifier,
-                                    rand_seed=rand_seed,
-                                    classifier_params=classifier_params
-                                   )
+            test_set_X,
+            test_set_proj,
+            train_pool_X,
+            train_pool_y,
+            train_pool_proj,
+            Base_Classifier,
+            rand_seed=rand_seed,
+            classifier_params=classifier_params
+        )
 
         self.k = k
         self.cluster_factor = cluster_factor
@@ -143,7 +143,7 @@ class Burak(tl_alg.Base_Transfer):
             "euc_dist": dist_matrix[i][j],
             "x": train_pool_X_local.iloc[j, :],
             "y": train_pool_y[j]
-            } for j in range(len(dist_matrix[0]))
+        } for j in range(len(dist_matrix[0]))
         ] for i in range(len(dist_matrix))]
 
         # Indices of training instances that have not been selected.
@@ -182,15 +182,15 @@ class Burak(tl_alg.Base_Transfer):
         """
 
         X_filtered, y_filtered = self.filter_instances(
-           train_pool_X,
-           train_pool_y,
-           test_set_X,
-           k
+            train_pool_X,
+            train_pool_y,
+            test_set_X,
+            k
         )
 
         classifier = Base_Classifier(
-           random_state=rand_seed,
-           **classifier_params
+            random_state=rand_seed,
+            **classifier_params
         )
 
         f = classifier.fit(X_filtered, y_filtered)

@@ -39,7 +39,7 @@ class Peters(tl_alg.Base_Transfer):
             Base_Classifier,
             rand_seed=rand_seed,
             classifier_params=classifier_params
-           )
+        )
 
         self.cluster_factor = cluster_factor
 
@@ -74,7 +74,7 @@ class Peters(tl_alg.Base_Transfer):
             "euc_dist_from": dist_matrix[i][j],
             "x": train_pool_X.iloc[i, :],
             "y": train_pool_y.iloc[i]
-            } for j in range(len(dist_matrix[0]))
+        } for j in range(len(dist_matrix[0]))
         ] for i in range(len(dist_matrix))]
 
         # For each index i corresponding to test instance e_i, there exists a
@@ -109,7 +109,6 @@ class Peters(tl_alg.Base_Transfer):
     def peters_filter(self, test_set_X, test_set_proj, train_pool_X,
                       train_pool_y, train_pool_proj, Base_Classifier,
                       rand_seed=None, classifier_params={}):
-
         """
         Train classifier on filtered training data and return class predictions
         and predicted-class probabilities. See class documentation for more
