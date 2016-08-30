@@ -5,8 +5,8 @@ from tl_algs import tl_alg
 
 
 def sim_minmax(column):
-    """Return a two-dimensional tuple where the first element is the minimum and the
-    second is the max"""
+    """Return a two-dimensional tuple where the first element is the
+    minimum and the second is the max"""
     return min(column), max(column)
 
 
@@ -20,31 +20,31 @@ class GravityWeight(tl_alg.Base_Transfer):
     def __init__(
             self,
             test_set_X,
-            test_set_proj,
+            test_set_domain,
             train_pool_X,
             train_pool_y,
-            train_pool_proj,
+            train_pool_domain,
             Base_Classifier,
             rand_seed=None,
             classifier_params={},
             similarity_func=sim_std):
         """Train a baseline classifier on only target data and
         return tuple (confidence, predictions).
-        This classifier uses none of the source/Cross project data.
+        This classifier uses none of the target or source domain data.
         """
         # this should be passing all the base parameters to the superclass
         super(
             GravityWeight,
             self).__init__(
             test_set_X,
-            test_set_proj,
+            test_set_domain,
             train_pool_X,
             train_pool_y,
-            train_pool_proj,
+            train_pool_domain,
             Base_Classifier,
             rand_seed=rand_seed,
             classifier_params=classifier_params)
-       # define the rest of the parameters here.
+        #define the rest of the parameters here.
         self.similarity_func = similarity_func
 
     def train_filter_test(self):
@@ -59,9 +59,10 @@ class GravityWeight(tl_alg.Base_Transfer):
             float(x) / (len(ranges) - x + 1)**2), similarity_count)
         # apply classification with sample weight.
         f = self.Base_Classifier(random_state=self.rand_seed,
-                                 **self.classifier_params).fit(self.train_pool_X,
-                                                               list(self.train_pool_y),
-                                                               sample_weight=np.array(weight_vec))
+                                 **self.classifier_params) \
+                .fit(self.train_pool_X,
+                     list(self.train_pool_y),
+                     sample_weight=np.array(weight_vec))
         confidence = f.predict_proba(self.test_set_X)
 
         return ([a[-1] for a in confidence] if len(confidence[0]) >

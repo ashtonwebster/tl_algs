@@ -15,9 +15,13 @@ def acc_metric(clf, X_test, y_test):
 
 def aucec50_metric(clf, X_test, y_test):
     '''Metric for aucec50'''
-    return vuln_metrics.aucec_50_score(
-        y_test.tolist(), [
-            a[1] for a in clf.predict_proba(X_test)])
+    confidence_matrix = clf.predict_proba(X_test)
+    # sometimes there are only confidence estimates for the negative class
+    # because all predictions are negative
+    confidence = [a[1] for a in confidence_matrix] \
+        if len(confidence_matrix[0]) == 2 \
+        else [0 for _ in confidence_matrix]
+    return vuln_metrics.aucec_50_score(y_test.tolist(), confidence)
 
 
 def aucec50_raw_metric(y_actual, y_predicted, y_confidence):
@@ -27,7 +31,8 @@ def aucec50_raw_metric(y_actual, y_predicted, y_confidence):
 # ----------------Voters----------------
 
 def count_vote(F_star, test_set_X, threshold_prop=0.5):
-    '''Takes the list of selected weak classifiers and return (confidence,prediction)
+    '''Takes the list of selected weak classifiers and return 
+    (confidence,prediction)
     threshold: proportion of functions which must predict yes for the label output to be yes
     '''
     pred_list = []
@@ -161,8 +166,8 @@ def mvv_filter(
 
 class TrBag(tl_alg.Base_Transfer):
 
-    def __init__(self, test_set_X, test_set_proj, train_pool_X,
-                 train_pool_y, train_pool_proj,
+    def __init__(self, test_set_X, test_set_domain, train_pool_X,
+                 train_pool_y, train_pool_domain,
                  Base_Classifier, rand_seed=None, classifier_params={},
                  T=100, bag_prop=1.0, filter_func=sc_trbag_filter,
                  vote_func=count_vote, validate_proportion=None):
@@ -178,7 +183,7 @@ class TrBag(tl_alg.Base_Transfer):
 
         validate_proportion: Default is None, which means validation set is not used.
         Otherwise, this indicates how much of the target training data to use for validation.  For example, if the target
-        project has 100 instances total, 50 of which are used for testing, then there are a total of 50 remaining for "training".
+        domain has 100 instances total, 50 of which are used for testing, then there are a total of 50 remaining for "training".
         Among these 50 training, a validation proportion of .5 would use 25 for validation and 25 for development.
 
         random_seed: A seed for the random number generator (used for replication of experiments).  This will be passed as a
@@ -193,10 +198,10 @@ class TrBag(tl_alg.Base_Transfer):
             TrBag,
             self).__init__(
             test_set_X,
-            test_set_proj,
+            test_set_domain,
             train_pool_X,
             train_pool_y,
-            train_pool_proj,
+            train_pool_domain,
             Base_Classifier,
             rand_seed=rand_seed,
             classifier_params=classifier_params)
@@ -211,10 +216,10 @@ class TrBag(tl_alg.Base_Transfer):
 
     def split_validation(
             self,
-            test_set_proj,
+            test_set_domain,
             train_pool_X,
             train_pool_y,
-            train_pool_proj,
+            train_pool_domain,
             validate_proportion,
             rand_seed):
         """ split the labeled data into validation and training and return
@@ -224,15 +229,19 @@ class TrBag(tl_alg.Base_Transfer):
         if (validate_proportion is None):
             # If not using validation set, then train set = validation set
             # Get all target instances
-            X_target = train_pool_X[np.array(train_pool_proj) == test_set_proj]
-            y_target = train_pool_y[np.array(train_pool_proj) == test_set_proj]
+            X_target = train_pool_X[
+                np.array(train_pool_domain) == test_set_domain]
+            y_target = train_pool_y[
+                np.array(train_pool_domain) == test_set_domain]
             X_validate = X_target_train = X_target
             y_validate = y_target_train = y_target
         else:
             # If using validation, then train set is all the data not in the validation set
             # Get all target instances
-            X_target = train_pool_X[np.array(train_pool_proj) == test_set_proj]
-            y_target = train_pool_y[np.array(train_pool_proj) == test_set_proj]
+            X_target = train_pool_X[
+                np.array(train_pool_domain) == test_set_domain]
+            y_target = train_pool_y[
+                np.array(train_pool_domain) == test_set_domain]
             # Create validation set
             X_validate = X_target.sample(
                 frac=validate_proportion, random_state=rand_seed)
@@ -294,10 +303,10 @@ class TrBag(tl_alg.Base_Transfer):
     def trbag_validate(
             self,
             test_set_X,
-            test_set_proj,
+            test_set_domain,
             train_pool_X,
             train_pool_y,
-            train_pool_proj,
+            train_pool_domain,
             Base_Classifier,
             classifier_params={},
             T=100,
@@ -318,7 +327,7 @@ class TrBag(tl_alg.Base_Transfer):
 
         validate_proportion: Default is None, which means validation set is not used.
         Otherwise, this indicates how much of the target training data to use for validation.  For example, if the target
-        project has 100 instances total, 50 of which are used for testing, then there are a total of 50 remaining for "training".
+        domain has 100 instances total, 50 of which are used for testing, then there are a total of 50 remaining for "training".
         Among these 50 training, a validation proportion of .5 would use 25 for validation and 25 for development.
 
         random_seed: A seed for the random number generator (used for replication of experiments).  This will be passed as a
@@ -333,10 +342,10 @@ class TrBag(tl_alg.Base_Transfer):
          X_validate,
          y_validate,
          train_pool_X,
-         train_pool_y) = self.split_validation(test_set_proj,
+         train_pool_y) = self.split_validation(test_set_domain,
                                                train_pool_X,
                                                train_pool_y,
-                                               train_pool_proj,
+                                               train_pool_domain,
                                                validate_proportion,
                                                rand_seed)
 
@@ -353,7 +362,7 @@ class TrBag(tl_alg.Base_Transfer):
         # create baseline learning which uses only labeled target data
         if (X_target_train.shape[0] == 0):
             # if no training instances, use dummy classifier
-            # in this case, no in project data is used for training at all.
+            # in this case, no target-domain data is used for training at all.
             f_0 = DummyClassifier(
                 strategy='uniform',
                 random_state=rand_seed).fit(
@@ -373,10 +382,10 @@ class TrBag(tl_alg.Base_Transfer):
     def train_filter_test(self):
         return self.trbag_validate(
             self.test_set_X,
-            self.test_set_proj,
+            self.test_set_domain,
             self.train_pool_X,
             self.train_pool_y,
-            self.train_pool_proj,
+            self.train_pool_domain,
             self.Base_Classifier,
             classifier_params=self.classifier_params,
             T=self.T,

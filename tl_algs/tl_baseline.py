@@ -6,20 +6,20 @@ from tl_algs import tl_alg
 
 class Target_Baseline(tl_alg.Base_Transfer):
     """
-    Train classifier using only target or in-project data, and no source or
-    cross-project data.
+    Train classifier using only target or in-domain data, and no source or
+    cross-domain data.
     """
 
-    def __init__(self, test_set_X, test_set_proj, train_pool_X, train_pool_y,
-                 train_pool_proj, Base_Classifier, rand_seed=None,
+    def __init__(self, test_set_X, test_set_domain, train_pool_X, train_pool_y,
+                 train_pool_domain, Base_Classifier, rand_seed=None,
                  classifier_params={}):
 
         super(Target_Baseline, self).__init__(
             test_set_X,
-            test_set_proj,
+            test_set_domain,
             train_pool_X,
             train_pool_y,
-            train_pool_proj,
+            train_pool_domain,
             Base_Classifier,
             rand_seed=rand_seed,
             classifier_params=classifier_params
@@ -38,10 +38,10 @@ class Target_Baseline(tl_alg.Base_Transfer):
         """
 
         X_target = self.train_pool_X[
-            np.array(self.train_pool_proj) == self.test_set_proj
+            np.array(self.train_pool_domain) == self.test_set_domain
         ]
         y_target = self.train_pool_y[
-            np.array(self.train_pool_proj) == self.test_set_proj
+            np.array(self.train_pool_domain) == self.test_set_domain
         ]
 
         classifier = self.Base_Classifier(
@@ -67,20 +67,20 @@ class Target_Baseline(tl_alg.Base_Transfer):
 
 class Source_Baseline(tl_alg.Base_Transfer):
     """
-    Train classifier using only source or cross-project data, and no target or
-    in-project data.
+    Train classifier using only source or cross-domain data, and no target or
+    in-domain data.
     """
 
-    def __init__(self, test_set_X, test_set_proj, train_pool_X, train_pool_y,
-                 train_pool_proj, Base_Classifier, rand_seed=None,
+    def __init__(self, test_set_X, test_set_domain, train_pool_X, train_pool_y,
+                 train_pool_domain, Base_Classifier, rand_seed=None,
                  classifier_params={}):
 
         super(Source_Baseline, self).__init__(
             test_set_X,
-            test_set_proj,
+            test_set_domain,
             train_pool_X,
             train_pool_y,
-            train_pool_proj,
+            train_pool_domain,
             Base_Classifier,
             rand_seed=rand_seed,
             classifier_params=classifier_params
@@ -99,10 +99,10 @@ class Source_Baseline(tl_alg.Base_Transfer):
         """
 
         X_source = self.train_pool_X[
-            np.array(self.train_pool_proj) != self.test_set_proj
+            np.array(self.train_pool_domain) != self.test_set_domain
         ]
         y_source = self.train_pool_y[
-            np.array(self.train_pool_proj) != self.test_set_proj
+            np.array(self.train_pool_domain) != self.test_set_domain
         ]
 
         classifier = self.Base_Classifier(
@@ -128,20 +128,19 @@ class Source_Baseline(tl_alg.Base_Transfer):
 
 class Hybrid_Baseline(tl_alg.Base_Transfer):
     """
-    Train classifier using all available source or cross-project and target or
-    in-project data.
+    Train classifier using all available source and target training data.
     """
 
-    def __init__(self, test_set_X, test_set_proj, train_pool_X, train_pool_y,
-                 train_pool_proj, Base_Classifier, rand_seed=None,
+    def __init__(self, test_set_X, test_set_domain, train_pool_X, train_pool_y,
+                 train_pool_domain, Base_Classifier, rand_seed=None,
                  classifier_params={}):
 
         super(Hybrid_Baseline, self).__init__(
             test_set_X,
-            test_set_proj,
+            test_set_domain,
             train_pool_X,
             train_pool_y,
-            train_pool_proj,
+            train_pool_domain,
             Base_Classifier,
             rand_seed=rand_seed,
             classifier_params=classifier_params

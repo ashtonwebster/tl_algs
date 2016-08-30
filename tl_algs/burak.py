@@ -93,16 +93,16 @@ class Burak(tl_alg.Base_Transfer):
             per cluster.
     """
 
-    def __init__(self, test_set_X, test_set_proj, train_pool_X, train_pool_y,
-                 train_pool_proj, Base_Classifier, classifier_params={},
+    def __init__(self, test_set_X, test_set_domain, train_pool_X, train_pool_y,
+                 train_pool_domain, Base_Classifier, classifier_params={},
                  rand_seed=None, k=10, cluster_factor=100):
 
         super(Burak, self).__init__(
             test_set_X,
-            test_set_proj,
+            test_set_domain,
             train_pool_X,
             train_pool_y,
-            train_pool_proj,
+            train_pool_domain,
             Base_Classifier,
             rand_seed=rand_seed,
             classifier_params=classifier_params
@@ -167,8 +167,8 @@ class Burak(tl_alg.Base_Transfer):
 
         return output_train_X, pd.Series(output_train_y)
 
-    def burak_filter(self, test_set_X, test_set_proj, train_pool_X,
-                     train_pool_y, train_pool_proj, Base_Classifier, k=10,
+    def burak_filter(self, test_set_X, test_set_domain, train_pool_X,
+                     train_pool_y, train_pool_domain, Base_Classifier, k=10,
                      rand_seed=None, classifier_params={}):
         """
         Train classifier on filtered training data and return class predictions
@@ -199,8 +199,8 @@ class Burak(tl_alg.Base_Transfer):
 
         return confidence, predictions
 
-    def batch_burak_filter(self, test_set_X, test_set_proj, train_pool_X,
-                           train_pool_y, train_pool_proj, Base_Classifier,
+    def batch_burak_filter(self, test_set_X, test_set_domain, train_pool_X,
+                           train_pool_y, train_pool_domain, Base_Classifier,
                            k=10, rand_seed=None, cluster_factor=100,
                            classifier_params={}):
         """
@@ -262,10 +262,10 @@ class Burak(tl_alg.Base_Transfer):
 
         return self.batch_burak_filter(
             self.test_set_X,
-            self.test_set_proj,
+            self.test_set_domain,
             self.train_pool_X,
             self.train_pool_y,
-            self.train_pool_proj,
+            self.train_pool_domain,
             self.Base_Classifier,
             k=self.k,
             rand_seed=self.rand_seed,

@@ -11,10 +11,10 @@ class Base_Transfer(object):
 
     Attributes:
         test_set_X: DataFrame representing feature matrix for test set.
-        test_set_proj: Name of project sampled for test set.
+        test_set_domain: Name of domain sampled for test set.
         train_pool_X: DataFrame representing feature matrix for training set.
         train_pool_y: Series representing label vector for training set.
-        train_pool_proj: Series the ith entry of which names the project to
+        train_pool_domain: Series the ith entry of which names the domain to
             which the ith row of train_pool_X and train_pool_y belongs.
         Base_Classifier: The sklearn classifier used for all classification
             tasks. For example, sklearn.ensemble.RandomForestClassifier.
@@ -22,8 +22,8 @@ class Base_Transfer(object):
         classifier_params: Parameters passed to classifier (default = {})
     """
 
-    def __init__(self, test_set_X, test_set_proj, train_pool_X, train_pool_y,
-                 train_pool_proj, Base_Classifier, rand_seed=None,
+    def __init__(self, test_set_X, test_set_domain, train_pool_X, train_pool_y,
+                 train_pool_domain, Base_Classifier, rand_seed=None,
                  classifier_params={}):
         """
         Instantiate transfer learning algorithm. See class documentation for
@@ -32,10 +32,10 @@ class Base_Transfer(object):
         """
 
         self.test_set_X = test_set_X
-        self.test_set_proj = test_set_proj
+        self.test_set_domain = test_set_domain
         self.train_pool_X = train_pool_X
         self.train_pool_y = train_pool_y
-        self.train_pool_proj = train_pool_proj
+        self.train_pool_domain = train_pool_domain
         self.Base_Classifier = Base_Classifier
         self.rand_seed = rand_seed
         self.classifier_params = classifier_params

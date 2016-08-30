@@ -26,16 +26,16 @@ class Peters(tl_alg.Base_Transfer):
             per cluster.
     """
 
-    def __init__(self, test_set_X, test_set_proj, train_pool_X, train_pool_y,
-                 train_pool_proj, Base_Classifier, rand_seed=None,
+    def __init__(self, test_set_X, test_set_domain, train_pool_X, train_pool_y,
+                 train_pool_domain, Base_Classifier, rand_seed=None,
                  classifier_params={}, cluster_factor=10):
 
         super(Peters, self).__init__(
             test_set_X,
-            test_set_proj,
+            test_set_domain,
             train_pool_X,
             train_pool_y,
-            train_pool_proj,
+            train_pool_domain,
             Base_Classifier,
             rand_seed=rand_seed,
             classifier_params=classifier_params
@@ -106,8 +106,8 @@ class Peters(tl_alg.Base_Transfer):
 
         return output_X, pd.Series(output_y)
 
-    def peters_filter(self, test_set_X, test_set_proj, train_pool_X,
-                      train_pool_y, train_pool_proj, Base_Classifier,
+    def peters_filter(self, test_set_X, test_set_domain, train_pool_X,
+                      train_pool_y, train_pool_domain, Base_Classifier,
                       rand_seed=None, classifier_params={}):
         """
         Train classifier on filtered training data and return class predictions
@@ -137,8 +137,8 @@ class Peters(tl_alg.Base_Transfer):
 
         return confidence, predictions
 
-    def batch_peters_filter(self, test_set_X, test_set_proj, train_pool_X,
-                            train_pool_y, train_pool_proj, Base_Classifier,
+    def batch_peters_filter(self, test_set_X, test_set_domain, train_pool_X,
+                            train_pool_y, train_pool_domain, Base_Classifier,
                             cluster_factor=10, rand_seed=None,
                             classifier_params={}):
         """
@@ -199,10 +199,10 @@ class Peters(tl_alg.Base_Transfer):
 
         return self.batch_peters_filter(
             self.test_set_X,
-            self.test_set_proj,
+            self.test_set_domain,
             self.train_pool_X,
             self.train_pool_y,
-            self.train_pool_proj,
+            self.train_pool_domain,
             self.Base_Classifier,
             cluster_factor=self.cluster_factor,
             rand_seed=self.rand_seed,
