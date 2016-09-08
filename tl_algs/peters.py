@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import euclidean_distances
-import burak
-from tl_algs import tl_alg
+from tl_algs import tl_alg, burak
 
 
 class Peters(tl_alg.Base_Transfer):

@@ -5,17 +5,42 @@ from tl_algs import tl_alg
 
 
 def sim_minmax(column):
-    """Return a two-dimensional tuple where the first element is the
-    minimum and the second is the max"""
+    """Similarity score using the range between min and max
+    for a value
+
+    Args:
+      column: a given feature column
+
+    Returns:
+      tuple: A tuple of the form (min, max)
+
+    """
     return min(column), max(column)
 
 
 def sim_std(column):
-    """Return a 2dim tuple of the form (mean - std, mean + std)"""
+    """Similarity score using the standard error for a column
+
+    Args:
+      column: a given feature column
+
+    Returns:
+      tuple: tuple with the first element one std dev below the mean
+      and the second element one std dev above the mean
+
+    """
     return (np.mean(column) - np.std(column), np.mean(column) + np.std(column))
 
 
 class GravityWeight(tl_alg.Base_Transfer):
+    """Train a baseline classifier on only target data and
+
+    Args:
+
+    Returns:
+      This classifier uses none of the target or source domain data.
+
+    """
 
     def __init__(
             self,
@@ -28,11 +53,7 @@ class GravityWeight(tl_alg.Base_Transfer):
             rand_seed=None,
             classifier_params={},
             similarity_func=sim_std):
-        """Train a baseline classifier on only target data and
-        return tuple (confidence, predictions).
-        This classifier uses none of the target or source domain data.
-        """
-        # this should be passing all the base parameters to the superclass
+
         super(
             GravityWeight,
             self).__init__(
@@ -44,15 +65,16 @@ class GravityWeight(tl_alg.Base_Transfer):
             Base_Classifier,
             rand_seed=rand_seed,
             classifier_params=classifier_params)
-        #define the rest of the parameters here.
+
         self.similarity_func = similarity_func
 
     def train_filter_test(self):
+        """Applies weight filter and returns predictions"""
         ranges = self.test_set_X.apply(self.similarity_func)
 
         def isinrange(row):
             return sum([cell >= ranges[i][0] and cell <= ranges[i][1]
-                        for i, cell in enumerate(row)])
+                for i, cell in enumerate(row)])
         # for each row, compute similarity
         similarity_count = self.train_pool_X.apply(isinrange, axis=1)
         weight_vec = map(lambda x: float(
@@ -69,6 +91,7 @@ class GravityWeight(tl_alg.Base_Transfer):
                 1 else list(confidence), f.predict(self.test_set_X))
 
     def json_encode(self):
+        """Encodes this class as a json object"""
         base = tl_alg.Base_Transfer.json_encode(self)
         base.update({"similarity_func": self.similarity_func.__name__})
         return base
