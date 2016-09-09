@@ -4,8 +4,8 @@
 
 ## Implemented Algorithms
 
-* [Burak](https://doi.org/10.1007/s10664-008-9103-7): Find close target instances to training instances
-* [Peters](https://doi.org/10.1109/MSR.2013.6624057): Use the k closest source instances to each target instance
+* [Burak](https://doi.org/10.1007/s10664-008-9103-7): Use the k closest source instances to each target instance (a.k.a. NN filtering)
+* [Peters](https://doi.org/10.1109/MSR.2013.6624057): Find closest target instances to training instances
 * [TrBagg](https://doi.org/10.1109/ICDM.2009.9): Bootstrap sample to create many learners, then filter
 * [Gravity Weighted](https://doi.org/10.1016/j.infsof.2011.09.007)
 * Baselines:
@@ -14,6 +14,8 @@
     * All available source domain training
 
 ## Installing
+
+For best results, install [Anaconda](https://www.continuum.io/downloads).  This will (a) ensure you have all of the necessary dependencies and (b) allow you to view the example as a jupyter notebook.
 
 ```
 # clone the repository
@@ -31,4 +33,4 @@ At the top of the file.
 
 ## Example
 
-See examples/example1.ipynb or examples/exampl1.html for an example usage.
+See examples/example1.ipynb or examples/example1.html for an example usage.
