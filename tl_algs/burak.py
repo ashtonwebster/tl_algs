@@ -159,13 +159,14 @@ class Burak(tl_alg.Base_Transfer):
             for j, x_train_instance in enumerate(
                     [dist_matrix[i][a] for a in available_training_ind][:k]):
                 # Append each instance to output.
-                output_train_X = output_train_X.append(x_train_instance['x'])
-                output_train_y.append(x_train_instance['y'])
+                if x_train_instance['x'].name not in output_train_X.index:
+                    output_train_X = output_train_X.append(x_train_instance['x'])
+                    output_train_y.append(x_train_instance['y'])
 
             # Remove training instances from list to ensure uniqueness.
-            del available_training_ind[:k]
+            #del available_training_ind[:k]
 
-        return output_train_X, pd.Series(output_train_y)
+        return output_train_X.drop_duplicates().reset_index(drop=True), pd.Series(output_train_y)
 
     def burak_filter(self, test_set_X, test_set_domain, train_pool_X,
                      train_pool_y, train_pool_domain, Base_Classifier, k=10,

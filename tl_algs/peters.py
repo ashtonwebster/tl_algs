@@ -91,17 +91,17 @@ class Peters(tl_alg.Base_Transfer):
             # Append information about each instance to each fan.
             fans[closest_test_name].append(dist_matrix[i][closest_test_name])
 
-            # For each new fan, find the largest fan in each group (i.e., the
-            # training instance closest to the test instance) and retain it.
-            for i, fan_group in enumerate(fans):
-                if len(fan_group) > 0:
-                    test_instance = [X_test.iloc[i, :]]
-                    fan_group_distances = [
-                        a['euc_dist_from'] for a in fan_group
-                    ]
-                    min_index = np.argmin(fan_group_distances)
-                    output_X = output_X.append(fan_group[min_index]['x'])
-                    output_y.append(fan_group[min_index]['y'])
+        # For each new fan, find the largest fan in each group (i.e., the
+        # training instance closest to the test instance) and retain it.
+        for i, fan_group in enumerate(fans):
+            if len(fan_group) > 0:
+                test_instance = [X_test.iloc[i, :]]
+                fan_group_distances = [
+                    a['euc_dist_from'] for a in fan_group
+                ]
+                min_index = np.argmin(fan_group_distances)
+                output_X = output_X.append(fan_group[min_index]['x'])
+                output_y.append(fan_group[min_index]['y'])
 
         return output_X, pd.Series(output_y)
 
