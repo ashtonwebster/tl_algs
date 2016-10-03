@@ -130,6 +130,7 @@ class Burak(tl_alg.Base_Transfer):
         filtered_X = pd.DataFrame()
         filtered_y = []
         working_X = train_pool_X.reset_index(drop=True)
+        working_y = list(train_pool_y)
         # for each instance in the the test set
         for (__, row) in X_test.iterrows():
             # find distances to all instances in training pool
@@ -140,7 +141,7 @@ class Burak(tl_alg.Base_Transfer):
             for i in sorted_distance_indexes[:k]:
                 if i not in filtered_X.index:
                     filtered_X = filtered_X.append(working_X.iloc[i,:])
-                    filtered_y.append(train_pool_y[i])
+                    filtered_y.append(working_y[i])
 
         return filtered_X, pd.Series(filtered_y)
 

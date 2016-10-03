@@ -52,11 +52,7 @@ class Target_Baseline(tl_alg.Base_Transfer):
         f = classifier.fit(X_target, list(y_target))
         confidence = f.predict_proba(self.test_set_X)
         predictions = f.predict(self.test_set_X)
-
-        if len(confidence[0]) > 1:
-            confidence = [a[-1] for a in confidence]
-        else:
-            confidence = list(confidence)
+        confidence = [a[-1] for a in confidence]
 
         return confidence, predictions
 

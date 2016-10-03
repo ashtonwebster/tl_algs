@@ -62,6 +62,7 @@ class Peters(tl_alg.Base_Transfer):
         filter_X = pd.DataFrame()
         filter_y = []
         working_X = train_pool_X.reset_index(drop=True)
+        working_y = list(train_pool_y)
         close_candidates = {}
         for __, row in train_pool_X.iterrows():
             distances = euclidean_distances([row], X_test)[0]
@@ -73,7 +74,7 @@ class Peters(tl_alg.Base_Transfer):
 
         for index, __ in close_candidates.values():
             filter_X = filter_X.append(train_pool_X.iloc[index,:])
-            filter_y.append(train_pool_y[index])
+            filter_y.append(working_y[index])
 
         return filter_X, pd.Series(filter_y)
 
