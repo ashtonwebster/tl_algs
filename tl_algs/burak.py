@@ -166,7 +166,7 @@ class Burak(tl_alg.Base_Transfer):
             # Remove training instances from list to ensure uniqueness.
             #del available_training_ind[:k]
 
-        return output_train_X.drop_duplicates().reset_index(drop=True), pd.Series(output_train_y)
+        return output_train_X.reset_index(drop=True), pd.Series(output_train_y)
 
     def burak_filter(self, test_set_X, test_set_domain, train_pool_X,
                      train_pool_y, train_pool_domain, Base_Classifier, k=10,
