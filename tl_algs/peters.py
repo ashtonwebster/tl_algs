@@ -59,51 +59,23 @@ class Peters(tl_alg.Base_Transfer):
             train_X: Feature matrix for filtered training set.
             train_y: Label vector for filtered training set.
         """
+        filter_X = pd.DataFrame()
+        filter_y = []
+        working_X = train_pool_X.reset_index(drop=True)
+        close_candidates = {}
+        for __, row in train_pool_X.iterrows():
+            distances = euclidean_distances([row], X_test)[0]
+            closest_index, closest_element = min(enumerate(distances), key=lambda x:x[1])
+            close_candidates[closest_index] = (closest_index, closest_element) \
+                    if closest_index not in close_candidates.keys() \
+                    else min((close_candidates[closest_index], (closest_index, closest_element)),
+                        key = lambda x: x[1])
 
-        output_X = pd.DataFrame(columns=train_pool_X.columns)
-        output_y = []
+        for index, __ in close_candidates.values():
+            filter_X = filter_X.append(train_pool_X.iloc[index,:])
+            filter_y.append(train_pool_y[index])
 
-        # For each training instance, find distance to each test instance.
-        dist_matrix = euclidean_distances(train_pool_X, X_test)
-
-        # For each distance, append reference to original X_train_pool row and
-        # label. This gives a list of the form [[{euc_dist_to, x, y, label}]].
-        dist_matrix = [[{
-            "euc_dist_to": None,
-            "euc_dist_from": dist_matrix[i][j],
-            "x": train_pool_X.iloc[i, :],
-            "y": train_pool_y.iloc[i]
-        } for j in range(len(dist_matrix[0]))
-        ] for i in range(len(dist_matrix))]
-
-        # For each index i corresponding to test instance e_i, there exists a
-        # set of training instances R_i such that e_i is the closest test
-        # instance in e_i to ever training instance r in R_i.
-        fans = [[] for i in range(len(X_test))]
-
-        # Get closest test instance for each training instance.
-        for i, (name, X_train_instance) in enumerate(train_pool_X.iterrows()):
-            # Sort by closest test instance to each training instance.
-            closest_test_name = np.argmin(
-                [a['euc_dist_from'] for a in dist_matrix[i]]
-            )
-
-            # Append information about each instance to each fan.
-            fans[closest_test_name].append(dist_matrix[i][closest_test_name])
-
-        # For each new fan, find the largest fan in each group (i.e., the
-        # training instance closest to the test instance) and retain it.
-        for i, fan_group in enumerate(fans):
-            if len(fan_group) > 0:
-                test_instance = [X_test.iloc[i, :]]
-                fan_group_distances = [
-                    a['euc_dist_from'] for a in fan_group
-                ]
-                min_index = np.argmin(fan_group_distances)
-                output_X = output_X.append(fan_group[min_index]['x'])
-                output_y.append(fan_group[min_index]['y'])
-
-        return output_X, pd.Series(output_y)
+        return filter_X, pd.Series(filter_y)
 
     def peters_filter(self, test_set_X, test_set_domain, train_pool_X,
                       train_pool_y, train_pool_domain, Base_Classifier,

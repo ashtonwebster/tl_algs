@@ -127,46 +127,22 @@ class Burak(tl_alg.Base_Transfer):
             train_X: Feature matrix for filtered training set.
             train_y: Label vector for filtered training set.
         """
+        filtered_X = pd.DataFrame()
+        filtered_y = []
+        working_X = train_pool_X.reset_index(drop=True)
+        # for each instance in the the test set
+        for (__, row) in X_test.iterrows():
+            # find distances to all instances in training pool
+            distances = euclidean_distances([row], train_pool_X)[0]
+            # get indexes of closest instances
+            sorted_distance_indexes = [index for index, __ in sorted(enumerate(distances), key=lambda x:x[1])]
+            # Add top k closest instances to output
+            for i in sorted_distance_indexes[:k]:
+                if i not in filtered_X.index:
+                    filtered_X = filtered_X.append(working_X.iloc[i,:])
+                    filtered_y.append(train_pool_y[i])
 
-        # Copy train_pool_X so that original is not modified.
-        train_pool_X_local = train_pool_X.copy()
-        train_pool_y = list(train_pool_y)
-        output_train_X = pd.DataFrame(columns=train_pool_X.columns)
-        output_train_y = []
-
-        # For each test instance, find distance to each training instance.
-        dist_matrix = euclidean_distances(X_test, train_pool_X_local)
-
-        # For each distance, append reference to original X_train_pool row and
-        # label. This gives a list of  the form [[{euc_dist, x, label}]].
-        dist_matrix = [[{
-            "euc_dist": dist_matrix[i][j],
-            "x": train_pool_X_local.iloc[j, :],
-            "y": train_pool_y[j]
-        } for j in range(len(dist_matrix[0]))
-        ] for i in range(len(dist_matrix))]
-
-        # Indices of training instances that have not been selected.
-        available_training_ind = range(len(dist_matrix[0]))
-        for i, x_test_instance in enumerate(X_test.iterrows()):
-            # Sort training instances by distance from current test instance.
-            available_training_ind = sorted(
-                available_training_ind,
-                key=lambda a: dist_matrix[i][a]['euc_dist']
-            )
-
-            # Take the top k training instances.
-            for j, x_train_instance in enumerate(
-                    [dist_matrix[i][a] for a in available_training_ind][:k]):
-                # Append each instance to output.
-                if x_train_instance['x'].name not in output_train_X.index:
-                    output_train_X = output_train_X.append(x_train_instance['x'])
-                    output_train_y.append(x_train_instance['y'])
-
-            # Remove training instances from list to ensure uniqueness.
-            #del available_training_ind[:k]
-
-        return output_train_X.reset_index(drop=True), pd.Series(output_train_y)
+        return filtered_X, pd.Series(filtered_y)
 
     def burak_filter(self, test_set_X, test_set_domain, train_pool_X,
                      train_pool_y, train_pool_domain, Base_Classifier, k=10,
