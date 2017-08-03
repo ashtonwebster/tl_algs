@@ -25,6 +25,12 @@ For best results, install [Anaconda](https://www.continuum.io/downloads).  This 
 > python setup.py install
 ```
 
+Another option is to install so that (local) updates to the source will immediately affect the installed package:
+
+```
+pip install -e .
+```
+
 Now you can use tl_algs in any file by including:
 ```
 import tl_algs

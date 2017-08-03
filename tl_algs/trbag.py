@@ -394,7 +394,7 @@ class TrBag(tl_alg.Base_Transfer):
             f = Base_Classifier(random_state=rand_seed, **classifier_params)
             # sample with replacement
             X_bootstrap = train_pool_X.sample(
-                bag_prop * len(train_pool_X),
+                int(bag_prop * len(train_pool_X)),
                 replace=True,
                 random_state=rand_seed + i)
             # print(len(X_bootstrap.index.unique()))

@@ -90,3 +90,4 @@ ENV/
 .swp
 .Rhistory
 .vimrc
+.DS_Store
