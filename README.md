@@ -19,7 +19,7 @@ For best results, install [Anaconda](https://www.continuum.io/downloads).  This 
 
 ```
 # clone the repository
-> git clone https://para.cs.umd.edu/purtilo/transfer-learning-algorithm-library
+> git clone https://github.com/ashtonwebster/tl_algs.git
 > cd tl_algs
 # install the package!
 > python setup.py install
