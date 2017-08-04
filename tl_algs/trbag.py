@@ -53,7 +53,7 @@ def count_vote(F_star, test_set_X, threshold_prop=0.5):
     # prediction = confidence > threshold_count
     prediction_arr = [confidence >
                       threshold_count for confidence in confidence_arr]
-    return (confidence_arr, prediction_arr)
+    return (confidence_arr, np.array(prediction_arr))
 
 
 def mean_confidence_vote(F_star, test_set_X):
@@ -239,7 +239,7 @@ class TrBag(tl_alg.Base_Transfer):
     """Apply the trBag method of transfer learning and return a tuple of the form (confidence_array, predicted_classes)
         T: number of classifiers to bootstrap on (plus one baseline classifier)
     
-        bag_prop: bag size should be this proportion of trainin set size, on the range [0,1]
+        sample_size: bag size should be this proportion of trainin set size, on the range [0,1]
     
         filter_func: which filter function to use (i.e. )
     
@@ -265,8 +265,8 @@ class TrBag(tl_alg.Base_Transfer):
 
     def __init__(self, test_set_X, test_set_domain, train_pool_X,
                  train_pool_y, train_pool_domain,
-                 Base_Classifier, rand_seed=None, classifier_params={},
-                 T=100, bag_prop=1.0, filter_func=sc_trbag_filter,
+                 Base_Classifier, sample_size, rand_seed=None, classifier_params={},
+                 T=100, filter_func=sc_trbag_filter,
                  vote_func=count_vote, validate_proportion=None):
         
         # this should be passing all the base parameters to the superclass
@@ -283,7 +283,7 @@ class TrBag(tl_alg.Base_Transfer):
             classifier_params=classifier_params)
         # define the rest of the parameters here.
         self.T = T
-        self.bag_prop = bag_prop
+        self.sample_size = sample_size 
         self.filter_func = filter_func
         self.vote_func = vote_func
 
@@ -368,19 +368,17 @@ class TrBag(tl_alg.Base_Transfer):
             train_pool_y,
             Base_Classifier,
             T,
-            bag_prop,
+            sample_size,
             rand_seed,
             classifier_params):
         """Bootstrap (sample with replacement) to create T classifiers and return list of classifiers F
         
-        bag_prop: the proportion of available training data to use
-
-        Args:
           train_pool_X: Training instances
           train_pool_y: training instance labels
-          Base_Classifier: 
+          Base_Classifier: the classifier to be used
+          sample_size: The number of instances to bootstrap sample (should be equal to the number of 
+                test target instances
           T: number of classifiers
-          bag_prop: float from 0 to 1 representing proportion of instances to use for bags
           rand_seed: random seed or None
           classifier_params: Classifier parameters passed as dictionary
 
@@ -394,7 +392,7 @@ class TrBag(tl_alg.Base_Transfer):
             f = Base_Classifier(random_state=rand_seed, **classifier_params)
             # sample with replacement
             X_bootstrap = train_pool_X.sample(
-                int(bag_prop * len(train_pool_X)),
+                n=sample_size,
                 replace=True,
                 random_state=rand_seed + i)
             # print(len(X_bootstrap.index.unique()))
@@ -412,9 +410,9 @@ class TrBag(tl_alg.Base_Transfer):
             train_pool_y,
             train_pool_domain,
             Base_Classifier,
+            sample_size,
             classifier_params={},
             T=100,
-            bag_prop=1.0,
             filter_func=sc_trbag_filter,
             vote_func=count_vote,
             validate_proportion=None,
@@ -430,10 +428,11 @@ class TrBag(tl_alg.Base_Transfer):
           train_pool_y: 
           train_pool_domain: 
           Base_Classifier: Classifier function to use (i.e. Random Forest)
+          sample_size: the number of instances to sample in the bagging phase.  This should be equal to the minimum of the target test set
+          and training set.
           classifier_params: dictionary of parameters to be passed to the base classifier.  Do not include rand seed; instead use the
         rand seed parameter and it will be passed to the classifier (Default value = {})
           T: number of classifiers to bootstrap on (plus one baseline classifier) (Default value = 100)
-          bag_prop: bag size should be this proportion of training set size, on the range [0,1] (Default value = 1.0)
           filter_func: which filter function to use (i.e. sc_trbag_filter)  (Default value = sc_trbag_filter)
           vote_func: (Default value = count_vote)
           validate_proportion: Default is None, which means validation set is not used.
@@ -466,8 +465,8 @@ class TrBag(tl_alg.Base_Transfer):
             train_pool_X,
             train_pool_y,
             Base_Classifier,
+            sample_size,
             T,
-            bag_prop,
             rand_seed,
             classifier_params)
 
@@ -500,9 +499,9 @@ class TrBag(tl_alg.Base_Transfer):
             self.train_pool_y,
             self.train_pool_domain,
             self.Base_Classifier,
+            self.sample_size,
             classifier_params=self.classifier_params,
             T=self.T,
-            bag_prop=self.bag_prop,
             filter_func=self.filter_func,
             vote_func=self.vote_func,
             validate_proportion=self.validate_proportion,
@@ -512,7 +511,7 @@ class TrBag(tl_alg.Base_Transfer):
         """Encode this classifier as a json object"""
         base = tl_alg.Base_Transfer.json_encode(self)
         base.update({"T": self.T,
-                     "bag-prop": self.bag_prop,
+                     "sample_size": self.sample_size,
                      "filter_func": self.filter_func.__name__,
                      "vote_func": self.vote_func.__name__,
                      "validate_prop": self.validate_proportion})

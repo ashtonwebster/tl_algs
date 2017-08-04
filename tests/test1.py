@@ -23,7 +23,7 @@ all_instances = pd.DataFrame({"x_coord" : [x[0] for x in X],
 #arbitrarily set domain index 0 as target
 test_set_domain = 0
 # we are going to set the first three instances as test data
-# note that this means that some of the target domain has training instances!
+# note that this means that some of the training set has target instances!
 test_set = all_instances[all_instances.domain_index == test_set_domain].sample(3, random_state=RAND_SEED)
 test_set_X = test_set.loc[:, ["x_coord", "y_coord"]].reset_index(drop=True)
 test_set_y = test_set.loc[:, ["label"]].reset_index(drop=True)
@@ -80,7 +80,7 @@ transfer_learners = [
                   train_pool_y=train_pool_y, 
                   train_pool_domain=train_pool_domain, 
                   Base_Classifier=RandomForestClassifier,
-              
+                  sample_size=test_set_y.shape[0],
                   rand_seed=RAND_SEED
                  ),
     tl_baseline.Hybrid_Baseline(test_set_X=test_set_X, 
