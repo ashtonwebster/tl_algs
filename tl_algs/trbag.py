@@ -4,23 +4,7 @@ import json
 from tl_algs import tl_alg
 from vuln_toolkit.common import vuln_metrics
 from sklearn.dummy import DummyClassifier
-
-
-# ----------------Metrics----------------
-
-def acc_metric(clf, X_test, y_test):
-    """Metric for accuracy
-
-    Args:
-      clf: Classifier to use
-      X_test: test training instances
-      y_test: test labels
-
-    Returns:
-      float: Accuracy as a number between 0 and 1
-
-    """
-    return clf.score(X_test, y_test.tolist())
+from sklearn.metrics import f1_score 
 
 
 # ----------------Voters----------------
@@ -45,20 +29,19 @@ def count_vote(F_star, test_set_X, threshold_prop=0.5):
         y_pred = f.predict(test_set_X)
         pred_list.append(y_pred.tolist())
     votes = zip(*pred_list)
-    threshold_count = len(F_star) * threshold_prop
 
     # confidence = num votes / total
-    confidence_arr = [float(sum(instance_votes)) / len(F_star)
-                      for instance_votes in votes]
+    confidence_arr = np.mean(votes, 1)
     # prediction = confidence > threshold_count
-    prediction_arr = [confidence >
-                      threshold_count for confidence in confidence_arr]
+
+    prediction_arr = confidence_arr > threshold_prop
     return (confidence_arr, np.array(prediction_arr))
 
 
-def mean_confidence_vote(F_star, test_set_X):
-    """
 
+def mean_confidence_vote(F_star, test_set_X, threshold_prop=0.5):
+    """
+    Sums the confidence of each predictor and uses that as the vote.
     Args:
       F_star: Subset of top performing learners
       test_set_X: Test set training instances
@@ -73,18 +56,20 @@ def mean_confidence_vote(F_star, test_set_X):
         proba = f.predict_proba(test_set_X)
         # give the confidence for the positive class (vulnerable), unless there
         # is no confidence
-        y_pred = [a[-1] for a in proba]
+        y_pred = [a[1] if len(a) > 0 else 0 for a in proba]
         pred_list.append(y_pred)
         # print("y_pred", str(y_pred))
 
     # combine so that each row is a list of predictions s.t. the ith row and the jth element in that row is the
     # jth prediction of the ith test instance
-    votes = zip(*pred_list)
+    confidence_votes = zip(*pred_list)
     # print(votes[0])
-    mean_confidence = map(np.mean, votes)
+    mean_confidence = np.mean(confidence_votes, 1)
+    predictions = mean_confidence > threshold_prop
+
     # return the mean confidence and if the confidence is greater than .5,
     # predict vulnerability
-    return (mean_confidence, map((lambda x: x >= .5), mean_confidence))
+    return (mean_confidence, predictions)
 
 
 # ----------------Filters----------------
@@ -122,7 +107,7 @@ def all_filter(f_0, F, X_target, y_target):
     return [f_0]
 
 
-def sc_trbag_filter(f_0, F, X_target, y_target, metric=acc_metric):
+def sc_trbag_filter(f_0, F, X_target, y_target, metric=f1_score):
     """filter based on SC method and return F_star (filtered weak classifiers)
     f_0: baseline
 
@@ -131,20 +116,22 @@ def sc_trbag_filter(f_0, F, X_target, y_target, metric=acc_metric):
       F: set of possible learners
       X_target: target training instances
       y_target: target training labels
-      metric: a function of the form f(clf, X_test, y_test) -> real number
-    (Default value = acc_metric)
+      metric: a function of the form f(y_true, y_pred) -> real number
+    (Default value = sklearn.metrics.f1_score)
 
     Returns:
       list: Filtered set of leaners F_star
 
     """
-    fallback_performance = metric(f_0, X_target, y_target)
+    fallback_performance = metric(y_target, f_0.predict(X_target))
     F_star = [f_0]
     # print(fallback_performance)
     for f in F:
         # append f if it has a better performance on the target set than the
         # fallback f_0
-        m = metric(f, X_target, y_target)
+        y_pred = f.predict(X_target)
+        m = metric(y_target, y_pred)
+
         # print(m)
         if m > fallback_performance:
             F_star.append(f)
@@ -157,7 +144,7 @@ def mvv_filter(
         F,
         X_target,
         y_target,
-        raw_metric=acc_metric,
+        raw_metric=f1_score,
         vote_func=mean_confidence_vote):
     """Majority Voting on the Validation Set (see
     https://doi.org/10.1109/ICDM.2009.9 for details)
@@ -171,67 +158,39 @@ def mvv_filter(
       F: set of possible learners
       X_target: target training instances
       y_target: target training labels
-      metric: a function of the form f(clf, X_test, y_test) -> real number
-    (Default value = acc_metric)
+      raw metric: a function of the form f(y_true, y_pred) -> real number
+    (Default value = sklearn.metrics.f1_score)
       vote_func: a function of the form f(F_star, test_set_X) -> (confidences,
     predictions) (Default value = mean_confidence_vote)
-      raw_metric: (Default value = acc_metric)
 
     Returns:
       list: A filtered list of learners F_star
 
     """
     fallback_predicted = f_0.predict(X_target)
-    proba = f_0.predict_proba(X_target)
-    # give the confidence for the positive class (vulnerable), unless there is
-    # no confidence
-    fallback_confidence = [a[1] for a in proba] \
-                          if len(proba[0]) > 1 \
-                          else [0 for a in proba]
-
-    fallback_performance = raw_metric(
-        y_target,
-        list(fallback_predicted),
-        list(fallback_confidence))
-    # print("fallback performance: " + str(fallback_performance))
+    fallback_performance = raw_metric(y_target, fallback_predicted)
     F_star = [f_0]
     # sort by descending metric scores (assume higher metric scores are better)
-    proba = f.predict_proba(X_target)
-    F_scores = [
-        raw_metric(y_target, f.predict(X_target),
-                   [a[1] for a in proba]
-                   if len(proba[0]) > 1
-                   else [0 for a in proba])
-        for f in F]
-    # print(F_scores)
-    # zip the lists so we have [(classifier, score), ...]
+    F_scores = [raw_metric(y_target, f.predict(X_target)) for f in F]
+    # zip so we have [(classifier, score), ...]
     F_merged = zip(F, F_scores)
-
-    # sort clasifiers by score
-    F_merged_sorted = sorted(F_merged, lambda a, b: int(a[1] - b[1]))
-    F_sorted = [a[0] for a in F_merged_sorted]
-    for f in F_sorted:
-        # deep copy F_star so changes to F_candidate do not affect f_star
+    F_merged_sorted = sorted(F_merged, key=lambda x: x[1], reverse=True)
+    # traverse list of F by descending score
+    for f, __ in F_merged_sorted:
+        # shallow copy F_star so changes to F_candidate do not affect f_star
         F_candidate = list(F_star)
-        # print("before append F_candidate len: {0}, F_star len: {1}".format(len(F_candidate), len(F_star)))
         # append a new classifier to the set of possible learners
         F_candidate.append(f)
-        # print("after append F_candidate len: {0}, F_star len: {1}".format(len(F_candidate), len(F_star)))
-
         # vote among F_candidate learners
         confidence, predictions = vote_func(F_candidate, X_target)
-        # print("F_candidate confidence for each: " + str(confidence[:5]))
         # get performance of new candidate set
-        candidate_performance = raw_metric(y_target, predictions, confidence)
-        # print("candidate performance: " + str(candidate_performance))
+        candidate_performance = raw_metric(y_target, predictions)
         # only select candidate set if its performance is better than the
         # fallback classifier alone
         if candidate_performance > fallback_performance:
-            # print("candidate performance: {0} fallback performance {1}".format(candidate_performance, fallback_performance))
             F_star = list(F_candidate)
             fallback_performance = candidate_performance
 
-    # print("f star length: " + str(len(F_star)))
     return F_star
 
 
@@ -266,7 +225,7 @@ class TrBag(tl_alg.Base_Transfer):
     def __init__(self, test_set_X, test_set_domain, train_pool_X,
                  train_pool_y, train_pool_domain,
                  Base_Classifier, sample_size, rand_seed=None, classifier_params={},
-                 T=100, filter_func=sc_trbag_filter,
+                 T=25, filter_func=sc_trbag_filter,
                  vote_func=count_vote, validate_proportion=None):
         
         # this should be passing all the base parameters to the superclass
@@ -367,8 +326,8 @@ class TrBag(tl_alg.Base_Transfer):
             train_pool_X,
             train_pool_y,
             Base_Classifier,
-            T,
             sample_size,
+            T,
             rand_seed,
             classifier_params):
         """Bootstrap (sample with replacement) to create T classifiers and return list of classifiers F
@@ -412,7 +371,7 @@ class TrBag(tl_alg.Base_Transfer):
             Base_Classifier,
             sample_size,
             classifier_params={},
-            T=100,
+            T=25,
             filter_func=sc_trbag_filter,
             vote_func=count_vote,
             validate_proportion=None,
@@ -471,8 +430,10 @@ class TrBag(tl_alg.Base_Transfer):
             classifier_params)
 
         # create baseline learning which uses only labeled target data
-        if (X_target_train.shape[0] == 0):
-            # if no training instances, use dummy classifier
+        if (X_target_train.shape[0] == 0 or validate_proportion is None
+                or  validate_proportion == 0):
+            # if no target training instances or nothing to
+            # validate on, use dummy classifier
             # in this case, no target-domain data is used for training at all.
             f_0 = DummyClassifier(
                 strategy='uniform',
