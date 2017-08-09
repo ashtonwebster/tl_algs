@@ -123,10 +123,17 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
         test_disc_arr, train_disc_arr = [], []
         for col_ind in range(self.test_set_X.shape[1]):
             # start with discretizing test set, save bins
-            test_disc, bins = pd.cut(self.test_set_X.iloc[:, col_ind], 
+            try:
+                test_disc, bins = pd.cut(self.test_set_X.iloc[:, col_ind], 
                             bins = self.num_disc_bins, 
                             labels=map(str, range(self.num_disc_bins)), 
                             retbins=True)
+            except ValueError:
+                test_disc, bins = pd.cut(self.test_set_X.iloc[:, col_ind],
+                            bins = [float('inf') * -1, float('inf')],
+                            labels = [str(0)],
+                            retbins=True)
+
             # makde sure bins cover entire interval
             bins[0] = -1 * float('inf')
             bins[-1] = float('inf')
