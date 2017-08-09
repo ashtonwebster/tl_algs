@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.ensemble import RandomForestClassifier
 import random
-from tl_algs import peters, weighted, trbag, tl_baseline, burak
+from tl_algs import peters, tnb, trbag, tl_baseline, burak
 RAND_SEED = 2016 
 random.seed(RAND_SEED) # change this to see new random data!
 
@@ -66,12 +66,11 @@ transfer_learners = [
                   Base_Classifier=RandomForestClassifier,
                   rand_seed=RAND_SEED
                  ),
-    weighted.GravityWeight(test_set_X=test_set_X, 
+    tnb.TransferNaiveBayes(test_set_X=test_set_X, 
                   test_set_domain=test_set_domain, 
                   train_pool_X=train_pool_X, 
                   train_pool_y=train_pool_y, 
                   train_pool_domain=train_pool_domain, 
-                  Base_Classifier=RandomForestClassifier,
                   rand_seed=RAND_SEED
                  ),
     trbag.TrBag(test_set_X=test_set_X, 

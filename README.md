@@ -7,7 +7,7 @@
 * [Burak](https://doi.org/10.1007/s10664-008-9103-7): Use the k closest source instances to each target instance (a.k.a. NN filtering)
 * [Peters](https://doi.org/10.1109/MSR.2013.6624057): Find closest target instances to training instances
 * [TrBagg](https://doi.org/10.1109/ICDM.2009.9): Bootstrap sample to create many learners, then filter
-* [Gravity Weighted](https://doi.org/10.1016/j.infsof.2011.09.007)
+* [Transfer Naive Bayes](https://doi.org/10.1016/j.infsof.2011.09.007)
 * Baselines:
     * Hybrid (all available source AND target training instances)
     * All available target training
