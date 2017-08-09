@@ -61,20 +61,20 @@ class Peters(tl_alg.Base_Transfer):
         """
         filter_X = pd.DataFrame()
         filter_y = []
-        working_X = train_pool_X.reset_index(drop=True)
-        working_y = list(train_pool_y)
         close_candidates = {}
-        for __, row in train_pool_X.iterrows():
+        # finding the closest test instance to each training instance
+        for train_index, row in train_pool_X.iterrows():
             distances = euclidean_distances([row], X_test)[0]
             closest_index, closest_element = min(enumerate(distances), key=lambda x:x[1])
-            close_candidates[closest_index] = (closest_index, closest_element) \
+            # add the new closest training instance to each test instance
+            close_candidates[closest_index] = (train_index, closest_element) \
                     if closest_index not in close_candidates.keys() \
-                    else min((close_candidates[closest_index], (closest_index, closest_element)),
+                    else min((close_candidates[closest_index], (train_index, closest_element)),
                         key = lambda x: x[1])
 
         for index, __ in close_candidates.values():
             filter_X = filter_X.append(train_pool_X.iloc[index,:])
-            filter_y.append(working_y[index])
+            filter_y.append(train_pool_y[index])
 
         return filter_X, pd.Series(filter_y)
 

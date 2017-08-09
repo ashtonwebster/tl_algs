@@ -198,7 +198,8 @@ class TrBag(tl_alg.Base_Transfer):
     """Apply the trBag method of transfer learning and return a tuple of the form (confidence_array, predicted_classes)
         T: number of classifiers to bootstrap on (plus one baseline classifier)
     
-        sample_size: bag size should be this proportion of trainin set size, on the range [0,1]
+        sample_size: The number of instances to bootstrap sample (should be equal to the number of 
+                test target instances
     
         filter_func: which filter function to use (i.e. )
     

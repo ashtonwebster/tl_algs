@@ -235,5 +235,8 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
     def json_encode(self):
         """Encodes this class as a json object"""
         base = tl_alg.Base_Transfer.json_encode(self)
-        base.update({"similarity_func": self.similarity_func.__name__})
+        base.update({"similarity_func": self.similarity_func.__name__,
+            "num_disc_bins" : self.num_disc_bins,
+            "discretize" : self.discretize
+            })
         return base
