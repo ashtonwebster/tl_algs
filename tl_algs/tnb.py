@@ -80,6 +80,9 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
         self.similarity_func = similarity_func
         self.num_disc_bins = 10
         self.discretize = discretize
+        self.cached_n_j = {}
+        self.cached_n_c = None
+        self.cached_cond_prob = {}
 
     def isinrange(self, row, ranges):
         """ returns a boolean vector where the ith entry corresponds
@@ -161,6 +164,28 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
         return (X_weighted[mask].weight.sum() + alpha) / \
                     (X_weighted.weight.sum() + n_c * alpha)
 
+    def get_cached_n_j(self, feature_index, X_weighted):
+        if feature_index not in self.cached_n_j.keys():
+            self.cached_n_j[feature_index] = len(X_weighted.iloc[:, feature_index].unique())
+        return self.cached_n_j[feature_index]
+
+    def get_cached_n_c(self):
+        if not self.cached_n_c:
+            self.cached_n_c = len(self.train_pool_y.unique())
+        return self.cached_n_c
+
+    def get_cached_conditional_prob(self, label, feature_index, feature_val,
+            X_weighted, n_c, n_j, alpha = 1):
+        if (label, feature_index, feature_val) not in self.cached_cond_prob.keys():
+            feature_mask = np.asarray(self.train_pool_y == label).reshape(-1) & \
+                np.asarray(X_weighted.iloc[:, feature_index] == feature_val)\
+                .reshape(-1)
+            class_mask = np.asarray(self.train_pool_y == label).reshape(-1)
+            self.cached_cond_prob[(label, feature_index, feature_val)] = \
+                    (X_weighted.weight.loc[feature_mask].sum() + alpha) / \
+                    (X_weighted.weight.loc[class_mask].sum() + n_c * alpha)
+        return self.cached_cond_prob[(label, feature_index, feature_val)]
+
     def get_conditional_prob(self, X_weighted, label, feature_index, 
             feature_val, alpha=1):
         """ Computes P(a_j|c), where a_j is value j for feature a, and 
@@ -175,15 +200,12 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
             feature_val: the value of the feature to calculate the prob. of
             alpha: the laplace smoothing factor, default is 1
         """
-        n_j = len(X_weighted.iloc[:, feature_index].unique())
-        n_c = len(self.train_pool_y.unique())
-        feature_mask = np.asarray(self.train_pool_y == label).reshape(-1) & \
-            np.asarray(X_weighted.iloc[:, feature_index] == feature_val)\
-            .reshape(-1)
-        class_mask = np.asarray(self.train_pool_y == label).reshape(-1)
-        return (X_weighted[feature_mask].weight.sum() + alpha) / \
-                (X_weighted[class_mask].weight.sum() + n_c * alpha)
+        n_j = self.get_cached_n_j(feature_index, X_weighted)
+        n_c = self.get_cached_n_c()
+        return self.get_cached_conditional_prob(label, feature_index, feature_val,
+                X_weighted, n_c, n_j, alpha=alpha)
 
+    
     def get_posterior_prob(self, X_weighted, label, instance):
         """ Compute P(c|u), where c is the class and u is the train instance
 
@@ -215,7 +237,6 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
             denominator += term
 
         return numerator / denominator
-
 
 
     def train_filter_test(self):
