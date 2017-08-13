@@ -63,6 +63,7 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
             classifier_params={},
             similarity_func=sim_std,
             num_disc_bins=10,
+            alpha=1,
             discretize=True):
 
         super(
@@ -80,6 +81,8 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
         self.similarity_func = similarity_func
         self.num_disc_bins = 10
         self.discretize = discretize
+        self.alpha = alpha
+
         self.cached_n_j = {}
         self.cached_n_c = None
         self.cached_cond_prob = {}
@@ -110,7 +113,7 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
         # for each row, calculate weight, analogous to w_i in the paper
         # note that in the paper the number of features (train_pool_X.shape[0]) is k
         weight_vec = map(lambda x: float(
-            float(x) / (self.train_pool_X.shape[0] - x + 1)**2), similarity_count)
+            float(x) / (self.train_pool_X.shape[1] - x + 1)**2), similarity_count)
         return weight_vec
 
     def get_discretized_X(self):
@@ -149,7 +152,30 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
         # combine discretized series to data frame
         return pd.concat(train_disc_arr, axis=1), pd.concat(test_disc_arr, axis=1)
 
-    def get_class_prob(self, X_weighted, label, alpha = 1):
+
+    def get_cached_n_j(self, feature_index, X_weighted):
+        if feature_index not in self.cached_n_j.keys():
+            self.cached_n_j[feature_index] = len(X_weighted.iloc[:, feature_index].unique())
+        return self.cached_n_j[feature_index]
+
+    def get_cached_n_c(self):
+        if not self.cached_n_c:
+            self.cached_n_c = len(self.train_pool_y.unique())
+        return self.cached_n_c
+
+    def get_cached_conditional_prob(self, label, feature_index, feature_val,
+            X_weighted, n_c, n_j, alpha):
+        if (label, feature_index, feature_val) not in self.cached_cond_prob.keys():
+            feature_mask = np.asarray(self.train_pool_y == label).reshape(-1) & \
+                np.asarray(X_weighted.iloc[:, feature_index] == feature_val)\
+                .reshape(-1)
+            class_mask = np.asarray(self.train_pool_y == label).reshape(-1)
+            self.cached_cond_prob[(label, feature_index, feature_val)] = \
+                    (X_weighted.weight.loc[feature_mask].sum() + alpha) / \
+                    (X_weighted.weight.loc[class_mask].sum() + n_c * alpha)
+        return self.cached_cond_prob[(label, feature_index, feature_val)]
+
+    def get_class_prob(self, X_weighted, label, alpha):
         """ Computes P(C) according to equation 7 in [1] 
         
         Args:
@@ -164,30 +190,8 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
         return (X_weighted[mask].weight.sum() + alpha) / \
                     (X_weighted.weight.sum() + n_c * alpha)
 
-    def get_cached_n_j(self, feature_index, X_weighted):
-        if feature_index not in self.cached_n_j.keys():
-            self.cached_n_j[feature_index] = len(X_weighted.iloc[:, feature_index].unique())
-        return self.cached_n_j[feature_index]
-
-    def get_cached_n_c(self):
-        if not self.cached_n_c:
-            self.cached_n_c = len(self.train_pool_y.unique())
-        return self.cached_n_c
-
-    def get_cached_conditional_prob(self, label, feature_index, feature_val,
-            X_weighted, n_c, n_j, alpha = 1):
-        if (label, feature_index, feature_val) not in self.cached_cond_prob.keys():
-            feature_mask = np.asarray(self.train_pool_y == label).reshape(-1) & \
-                np.asarray(X_weighted.iloc[:, feature_index] == feature_val)\
-                .reshape(-1)
-            class_mask = np.asarray(self.train_pool_y == label).reshape(-1)
-            self.cached_cond_prob[(label, feature_index, feature_val)] = \
-                    (X_weighted.weight.loc[feature_mask].sum() + alpha) / \
-                    (X_weighted.weight.loc[class_mask].sum() + n_c * alpha)
-        return self.cached_cond_prob[(label, feature_index, feature_val)]
-
     def get_conditional_prob(self, X_weighted, label, feature_index, 
-            feature_val, alpha=1):
+            feature_val, alpha):
         """ Computes P(a_j|c), where a_j is value j for feature a, and 
         c is the class
 
@@ -203,10 +207,10 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
         n_j = self.get_cached_n_j(feature_index, X_weighted)
         n_c = self.get_cached_n_c()
         return self.get_cached_conditional_prob(label, feature_index, feature_val,
-                X_weighted, n_c, n_j, alpha=alpha)
+                X_weighted, n_c, n_j, alpha)
 
     
-    def get_posterior_prob(self, X_weighted, label, instance):
+    def get_posterior_prob(self, X_weighted, label, instance, alpha):
         """ Compute P(c|u), where c is the class and u is the train instance
 
         Calculated according to equation 1 from [1]
@@ -220,20 +224,22 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
         """
 
         # building numerator
-        numerator = self.get_class_prob(X_weighted, label)
+        numerator = self.get_class_prob(X_weighted, label, alpha)
         # column index = j
         for j in range(len(instance)):
             numerator *= self.get_conditional_prob(X_weighted,
-                    label = label, feature_index = j, feature_val=instance[j])
+                    label = label, feature_index = j, feature_val=instance[j],
+                    alpha=alpha)
 
         # building denominator
         denominator = 0
         for c in self.train_pool_y.unique():
-            term = self.get_class_prob(X_weighted, c)
+            term = self.get_class_prob(X_weighted, c, alpha)
             for j in range(len(instance)):
                 term *= self.get_conditional_prob(X_weighted,
                         label = c, feature_index = j, 
-                        feature_val=instance[j])
+                        feature_val=instance[j],
+                        alpha=alpha)
             denominator += term
 
         return numerator / denominator
@@ -253,11 +259,11 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
         y_pred, y_conf = [], []
         for __, row in X_test_disc.iterrows():
             class_probs = [self.get_posterior_prob(X_train_disc,
-                c, row) for c in [False, True]]
+                c, row, self.alpha) for c in [False, True]]
             i = np.argmax(class_probs)
             y_pred.append(i == 1)
             y_conf.append(class_probs[i])
-        return np.array(y_pred), np.array(y_conf)
+        return np.array(y_conf), np.array(y_pred)
             
 
     def json_encode(self):
