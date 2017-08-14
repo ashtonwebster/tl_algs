@@ -242,7 +242,8 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
                         alpha=alpha)
             denominator += term
 
-        return numerator / denominator
+        
+        return numerator / denominator if denominator != 0 else 0
 
 
     def train_filter_test(self):
