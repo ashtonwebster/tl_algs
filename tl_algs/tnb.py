@@ -171,8 +171,8 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
                 .reshape(-1)
             class_mask = np.asarray(self.train_pool_y == label).reshape(-1)
             self.cached_cond_prob[(label, feature_index, feature_val)] = \
-                    (X_weighted.weight.loc[feature_mask].sum() + alpha) / \
-                    (X_weighted.weight.loc[class_mask].sum() + n_c * alpha)
+                    (X_weighted.myweight.loc[feature_mask].sum() + alpha) / \
+                    (X_weighted.myweight.loc[class_mask].sum() + n_c * alpha)
         return self.cached_cond_prob[(label, feature_index, feature_val)]
 
     def get_class_prob(self, X_weighted, label, alpha):
@@ -187,8 +187,8 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
         # number of classes
         n_c = len(self.train_pool_y.unique())
         mask = np.asarray(self.train_pool_y == label).reshape(-1)
-        return (X_weighted[mask].weight.sum() + alpha) / \
-                    (X_weighted.weight.sum() + n_c * alpha)
+        return (X_weighted[mask].myweight.sum() + alpha) / \
+                    (X_weighted.myweight.sum() + n_c * alpha)
 
     def get_conditional_prob(self, X_weighted, label, feature_index, 
             feature_val, alpha):
@@ -254,7 +254,7 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
         else:
             X_train_disc, X_test_disc = self.train_pool_X, self.test_set_X
 
-        X_train_disc['weight'] = weights
+        X_train_disc['myweight'] = weights
         
         y_pred, y_conf = [], []
         for __, row in X_test_disc.iterrows():

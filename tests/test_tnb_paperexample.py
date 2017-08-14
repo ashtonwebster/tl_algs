@@ -32,6 +32,6 @@ w = tnb.TransferNaiveBayes(test_set_X=X_test,
         similarity_func=tnb.sim_minmax,
         discretize=False)
 
-y_pred, conf = w.train_filter_test()
+conf, y_pred = w.train_filter_test()
 # 0.936 obtained by manual computation
 assert abs(conf[0] - 0.936) < 0.001
