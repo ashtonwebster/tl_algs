@@ -18,6 +18,12 @@
 For best results, install [Anaconda](https://www.continuum.io/downloads).  This will (a) ensure you have all of the necessary dependencies and (b) allow you to view the example as a jupyter notebook.
 
 ```
+# install the TCA dependency
+> git clone https://github.com/ashtonwebster/transferlearning
+> cd transferlearning/code/python
+# install the dependency
+> pip install -e .
+> cd ../../../
 # clone the repository
 > git clone https://github.com/ashtonwebster/tl_algs.git
 > cd tl_algs
