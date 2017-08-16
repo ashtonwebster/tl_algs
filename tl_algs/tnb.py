@@ -263,7 +263,8 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
                 c, row, self.alpha) for c in [False, True]]
             i = np.argmax(class_probs)
             y_pred.append(i == 1)
-            y_conf.append(class_probs[i])
+            # always get probability of positive prediction
+            y_conf.append(class_probs[1])
         return np.array(y_conf), np.array(y_pred)
             
 

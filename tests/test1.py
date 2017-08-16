@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.ensemble import RandomForestClassifier
 import random
-from tl_algs import peters, tnb, trbag, tl_baseline, burak
+from tl_algs import peters, tnb, trbag, tl_baseline, burak, tca, tca_plus
 RAND_SEED = 2016 
 random.seed(RAND_SEED) # change this to see new random data!
 
@@ -37,6 +37,22 @@ train_pool_domain = train_pool.domain_index
 # We don't have much training data, but we got some predictions with confidence levels!
 
 transfer_learners = [
+    tca_plus.TCAPlus(test_set_X=test_set_X, 
+                test_set_domain=test_set_domain, 
+                train_pool_X=train_pool_X, 
+                train_pool_y=train_pool_y, 
+                train_pool_domain=train_pool_domain, 
+                Base_Classifier=RandomForestClassifier,
+                rand_seed=RAND_SEED
+                ),
+    tca.TCA(test_set_X=test_set_X, 
+                test_set_domain=test_set_domain, 
+                train_pool_X=train_pool_X, 
+                train_pool_y=train_pool_y, 
+                train_pool_domain=train_pool_domain, 
+                Base_Classifier=RandomForestClassifier,
+                rand_seed=RAND_SEED
+                ),
     tl_baseline.Source_Baseline(
                 test_set_X=test_set_X, 
                 test_set_domain=test_set_domain, 

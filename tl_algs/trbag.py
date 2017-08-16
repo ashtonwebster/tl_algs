@@ -2,74 +2,12 @@ import numpy as np
 import pandas as pd
 import json
 from tl_algs import tl_alg
+import voter
 from vuln_toolkit.common import vuln_metrics
 from sklearn.dummy import DummyClassifier
 from sklearn.metrics import f1_score 
 
 
-# ----------------Voters----------------
-def count_vote(F_star, test_set_X, threshold_prop=0.5):
-    """Takes the list of selected weak classifiers and return
-    (confidence,prediction)
-    threshold: proportion of functions which must predict yes for the label
-    output to be yes
-
-    Args:
-      F_star: Subset of top performing learners
-      test_set_X: Test set training instances
-      threshold_prop: Proportion of votes required to assign positive label
-    (Default value = 0.5)
-
-    Returns:
-      tuple: Tuple of the form (confidences, predictions)
-
-    """
-    pred_list = []
-    for f in F_star:
-        y_pred = f.predict(test_set_X)
-        pred_list.append(y_pred.tolist())
-    votes = zip(*pred_list)
-
-    # confidence = num votes / total
-    confidence_arr = np.mean(votes, 1)
-    # prediction = confidence > threshold_count
-
-    prediction_arr = confidence_arr > threshold_prop
-    return (confidence_arr, np.array(prediction_arr))
-
-
-
-def mean_confidence_vote(F_star, test_set_X, threshold_prop=0.5):
-    """
-    Sums the confidence of each predictor and uses that as the vote.
-    Args:
-      F_star: Subset of top performing learners
-      test_set_X: Test set training instances
-
-    Returns:
-      tuple: Tuple of the form (confidences, predictions)
-
-    """
-
-    pred_list = []
-    for f in F_star:
-        proba = f.predict_proba(test_set_X)
-        # give the confidence for the positive class (vulnerable), unless there
-        # is no confidence
-        y_pred = [a[1] if len(a) > 0 else 0 for a in proba]
-        pred_list.append(y_pred)
-        # print("y_pred", str(y_pred))
-
-    # combine so that each row is a list of predictions s.t. the ith row and the jth element in that row is the
-    # jth prediction of the ith test instance
-    confidence_votes = zip(*pred_list)
-    # print(votes[0])
-    mean_confidence = np.mean(confidence_votes, 1)
-    predictions = mean_confidence > threshold_prop
-
-    # return the mean confidence and if the confidence is greater than .5,
-    # predict vulnerability
-    return (mean_confidence, predictions)
 
 
 # ----------------Filters----------------
@@ -145,7 +83,7 @@ def mvv_filter(
         X_target,
         y_target,
         raw_metric=f1_score,
-        vote_func=mean_confidence_vote):
+        vote_func=voter.mean_confidence_vote):
     """Majority Voting on the Validation Set (see
     https://doi.org/10.1109/ICDM.2009.9 for details)
     
@@ -227,7 +165,7 @@ class TrBag(tl_alg.Base_Transfer):
                  train_pool_y, train_pool_domain,
                  Base_Classifier, sample_size, rand_seed=None, classifier_params={},
                  T=25, filter_func=sc_trbag_filter,
-                 vote_func=count_vote, validate_proportion=None):
+                 vote_func=voter.count_vote, validate_proportion=None):
         
         # this should be passing all the base parameters to the superclass
         super(
@@ -374,7 +312,7 @@ class TrBag(tl_alg.Base_Transfer):
             classifier_params={},
             T=25,
             filter_func=sc_trbag_filter,
-            vote_func=count_vote,
+            vote_func=voter.count_vote,
             validate_proportion=None,
             rand_seed=None):
         """Apply the trBag method of transfer learning and return a tuple of the form (confidence_array, predicted_classes)
