@@ -79,7 +79,7 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
             classifier_params=classifier_params)
 
         self.similarity_func = similarity_func
-        self.num_disc_bins = 10
+        self.num_disc_bins = num_disc_bins
         self.discretize = discretize
         self.alpha = alpha
 
