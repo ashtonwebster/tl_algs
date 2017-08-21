@@ -212,10 +212,7 @@ class TCAPlus(tl_alg.Base_Transfer):
         # Rule 5
         return self.zscore_normalization(source_X, target_X)
 
-    def predict_one_proj(self, proj_name, target_X, test_dist, test_dcv):
-        source_X =self.train_pool_X[np.array(self.train_pool_domain) \
-            == proj_name]
-        source_y = self.train_pool_y[source_X.index]
+    def predict_one_proj(self, source_X, source_y, target_X, test_dist, test_dcv):
         # compute dcv for project
         X_dist = self.compute_distance_set(source_X)
         X_dcv = self.compute_dcv(X_dist, source_X.shape[0])
@@ -259,9 +256,15 @@ class TCAPlus(tl_alg.Base_Transfer):
         test_dcv = self.compute_dcv(test_dist, target_X.shape[0])
         # for each project
         pred_list = []
-        for proj in set(self.train_pool_domain):
-            pred_list.append(self.predict_one_proj(proj, target_X, test_dist,
-                test_dcv))
+        for proj_name in set(self.train_pool_domain):
+            source_X =self.train_pool_X[np.array(self.train_pool_domain) \
+                == proj_name]
+            source_y = self.train_pool_y[source_X.index]
+            if source_X.shape[0] == 1:
+                continue
+            else:
+                pred_list.append(self.predict_one_proj(source_X, source_y, 
+                    target_X, test_dist, test_dcv))
 
         # use vote counting to determine confidence and prediction
         votes = zip(*pred_list)
