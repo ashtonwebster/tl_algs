@@ -99,8 +99,7 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
             A boolean vector
 
         """
-        return sum([cell >= ranges[i][0] and cell <= ranges[i][1]
-            for i, cell in enumerate(row)])
+        return sum([ranges[i][0] <= cell <= ranges[i][1] for i, cell in row.items()])
 
     def get_weights(self):
         """
@@ -109,12 +108,13 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
         # ranges is analogous to min_ij and max_ij in the paper
         ranges = self.test_set_X.apply(self.similarity_func)
         # for each row, compute similarity, analogous to s_i in the paper
+
         similarity_count = self.train_pool_X.apply(lambda x: self.isinrange(x, ranges), axis=1)
         # for each row, calculate weight, analogous to w_i in the paper
         # note that in the paper the number of features (train_pool_X.shape[0]) is k
         weight_vec = map(lambda x: float(
             float(x) / (self.train_pool_X.shape[1] - x + 1)**2), similarity_count)
-        return weight_vec
+        return list(weight_vec)
 
     def get_discretized_X(self):
         """
@@ -130,9 +130,10 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
         for col_ind in range(self.test_set_X.shape[1]):
             # start with discretizing test set, save bins
             try:
+                labels = list(map(str, range(self.num_disc_bins)))
                 test_disc, bins = pd.cut(self.test_set_X.iloc[:, col_ind], 
                             bins = self.num_disc_bins, 
-                            labels=map(str, range(self.num_disc_bins)), 
+                            labels = labels,
                             retbins=True)
             except ValueError:
                 test_disc, bins = pd.cut(self.test_set_X.iloc[:, col_ind],
@@ -144,9 +145,10 @@ class TransferNaiveBayes(tl_alg.Base_Transfer):
             bins[0] = -1 * float('inf')
             bins[-1] = float('inf')
             # use (modified) test set bins for training set discretization
+            labels = list(map(str, range(len(bins)-1)))
             train_disc = pd.cut(self.train_pool_X.iloc[:, col_ind], 
                             bins=bins, 
-                            labels=map(str, range(len(bins)-1)))
+                            labels=labels)
             test_disc_arr.append(test_disc)
             train_disc_arr.append(train_disc)
         # combine discretized series to data frame

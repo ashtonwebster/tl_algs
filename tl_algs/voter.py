@@ -21,8 +21,9 @@ def count_vote(clf_list, test_set_X, threshold_prop=0.5):
     for f in clf_list:
         y_pred = f.predict(test_set_X)
         pred_list.append(y_pred.tolist())
-    votes = zip(*pred_list)
 
+    # votes = zip(*pred_list)
+    votes = np.array(pred_list)
     # confidence = num votes / total
     confidence_arr = np.mean(votes, 1)
     # prediction = confidence > threshold_count
