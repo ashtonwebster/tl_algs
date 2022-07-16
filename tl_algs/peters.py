@@ -75,7 +75,8 @@ class Peters(tl_alg.Base_Transfer):
                         key = lambda x: x[1])
 
         for index, __ in close_candidates.values():
-            filter_X = filter_X.append(X_working.loc[index,:])
+            x_working = pd.DataFrame(X_working.loc[index,:]).transpose()
+            filter_X = pd.concat([filter_X, x_working])
             filter_y.append(y_working.loc[index])
 
         return filter_X, pd.Series(filter_y)
@@ -136,7 +137,7 @@ class Peters(tl_alg.Base_Transfer):
         )
 
         X_train_filtered = pd.DataFrame()
-        y_train_filtered = pd.Series()
+        y_train_filtered = pd.Series(dtype=float)
 
         # Apply Peters filter within each cluster.
         for d in clusters:
@@ -145,8 +146,10 @@ class Peters(tl_alg.Base_Transfer):
                 d['y_train'],
                 d['X_test']
             )
-            X_train_filtered = X_train_filtered.append(more_X_train)
-            y_train_filtered = y_train_filtered.append(more_y_train)
+            # X_train_filtered = X_train_filtered.append(more_X_train)
+            # y_train_filtered = y_train_filtered.append(more_y_train)
+            X_train_filtered = pd.concat([X_train_filtered, more_X_train])
+            y_train_filtered = pd.concat([y_train_filtered, more_y_train])
         X_train_filtered.reset_index(drop=True, inplace=True)
         y_train_filtered.reset_index(drop=True, inplace=True)
 
