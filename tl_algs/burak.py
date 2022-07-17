@@ -27,7 +27,6 @@ def _kmeans_cluster(test_set_X, train_pool_X, train_pool_y, cluster_factor,
         entry is the ith cluster of training and test instances.
     """
 
-    # master_X_df = train_pool_X.append(test_set_X)
     master_X_df = pd.concat([train_pool_X, test_set_X])
     num_clust = master_X_df.shape[0] // cluster_factor
 
@@ -46,8 +45,6 @@ def _kmeans_cluster(test_set_X, train_pool_X, train_pool_y, cluster_factor,
     for i, clust in enumerate(X_test_clusters):
         x_pool = pd.DataFrame(test_set_X.iloc[i, ]).transpose()
         clusters[clust]['X_test'] = pd.concat([clusters[clust]['X_test'], x_pool])
-        # clusters[clust]['X_test'] = clusters[clust]['X_test']. \
-        #     append(test_set_X.iloc[i, ])
 
     # Populate clusters based on training data.
     X_train_clusters = cluster_model.predict(train_pool_X)
@@ -56,10 +53,7 @@ def _kmeans_cluster(test_set_X, train_pool_X, train_pool_y, cluster_factor,
         y_pool = pd.Series([train_pool_y.iloc[i]])
         clusters[clust]['X_train'] = pd.concat([clusters[clust]['X_train'], x_pool])
         clusters[clust]['y_train'] = pd.concat([clusters[clust]['y_train'], y_pool])
-        # clusters[clust]['X_train'] = clusters[clust]['X_train']. \
-        #     append(train_pool_X.iloc[i, ])
-        # clusters[clust]['y_train'] = clusters[clust]['y_train'] \
-        #     .append(pd.Series([train_pool_y.iloc[i]]))
+
     # Remove clusters with no test instance.
     to_remove = [
         i for (i, d) in enumerate(clusters)
@@ -165,7 +159,6 @@ class Burak(tl_alg.Base_Transfer):
                 of which gives the confidence for the ith prediction.
             predictions: List of class predictions.
         """
-        print("=====", len(train_pool_X), len(train_pool_y))
         X_filtered, y_filtered = self.filter_instances(
             train_pool_X,
             train_pool_y,
@@ -221,8 +214,6 @@ class Burak(tl_alg.Base_Transfer):
             )
             X_train_filtered = pd.concat([X_train_filtered, more_X_train])
             y_train_filtered = pd.concat([y_train_filtered, more_y_train])
-            # X_train_filtered = X_train_filtered.append(more_X_train)
-            # y_train_filtered = y_train_filtered.append(more_y_train)
 
         classifier = Base_Classifier(
             random_state=rand_seed,
