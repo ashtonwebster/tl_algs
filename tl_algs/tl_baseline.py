@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import json
-from tl_algs import tl_alg
+from . import tl_alg
 
 
 class Target_Baseline(tl_alg.Base_Transfer):

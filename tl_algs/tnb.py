@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import json
-from tl_algs import tl_alg
+from . import tl_alg
 
 
 def sim_minmax(column):
