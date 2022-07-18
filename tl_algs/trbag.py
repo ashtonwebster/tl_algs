@@ -1,9 +1,7 @@
 import numpy as np
 import pandas as pd
 import json
-from tl_algs import tl_alg
-from tl_algs import voter
-# from vuln_toolkit.common import vuln_metrics
+from . import tl_alg, voter
 from sklearn.dummy import DummyClassifier
 from sklearn.metrics import f1_score 
 

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import json
-from tl_algs import tl_alg
+from . import tl_alg
 import da_tool.tca
 from sklearn.metrics.pairwise import euclidean_distances
 from scipy.stats import zscore
